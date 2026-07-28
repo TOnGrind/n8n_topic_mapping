@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>n8n Audio Uploader</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="card">
+        <div class="badge">n8n Webhook</div>
+        <h1>MP3 hochladen</h1>
+        <p class="subtitle">
+          Ziehe eine MP3-Datei in das Feld oder wähle sie auf deinem Computer aus.
+        </p>
+
+        <label class="label" for="webhookUrl">Webhook-URL</label>
+        <input
+          id="webhookUrl"
+          class="input"
+          type="url"
+          value="http://localhost:5678/webhook-test/0e8824b2-8b66-4c84-b143-8ed3863eb4cf"
+        />
+
+        <div id="dropzone" class="dropzone" tabindex="0" role="button">
+          <div class="icon">↑</div>
+          <strong>MP3 hier ablegen</strong>
+          <span>oder klicken, um eine Datei auszuwählen</span>
+          <small>Maximal 100 MB</small>
+        </div>
+
+        <input
+          id="fileInput"
+          type="file"
+          accept=".mp3,audio/mpeg"
+          hidden
+        />
+
+        <div id="fileCard" class="file-card hidden">
+          <div>
+            <strong id="fileName"></strong>
+            <span id="fileSize"></span>
+          </div>
+          <button id="removeButton" type="button" class="remove-button">×</button>
+        </div>
+
+        <audio id="audioPreview" class="audio-preview hidden" controls></audio>
+
+        <div id="progressWrap" class="progress-wrap hidden">
+          <div class="progress-label">
+            <span>Upload</span>
+            <strong id="progressText">0%</strong>
+          </div>
+          <div class="progress-track">
+            <div id="progressBar" class="progress-bar"></div>
+          </div>
+        </div>
+
+        <div id="message" class="message hidden"></div>
+
+        <details id="responseBox" class="response-box hidden">
+          <summary>Webhook-Antwort</summary>
+          <pre id="responseText"></pre>
+        </details>
+
+        <div class="actions">
+          <button id="uploadButton" type="button" class="primary" disabled>
+            An n8n senden
+          </button>
+        </div>
+
+        <p class="hint">
+          Die Datei wird als <code>multipart/form-data</code> im Feld
+          <code>audio</code> gesendet.
+        </p>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
