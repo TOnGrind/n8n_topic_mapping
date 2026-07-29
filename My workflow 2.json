@@ -1,0 +1,166 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "multipleMethods": true,
+        "httpMethod": [
+          "POST"
+        ],
+        "path": "0e8824b2-8b66-4c84-b143-8ed3863eb4cf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -288,
+        -96
+      ],
+      "id": "ef1c22d8-9ac7-42e7-8921-9ddebcaba34b",
+      "name": "Webhook",
+      "webhookId": "0e8824b2-8b66-4c84-b143-8ed3863eb4cf",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/transcribe",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "audio",
+              "inputDataFieldName": "audio"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "c70c34c8-a1bf-4787-a265-a601a76262af",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Du bist ein System zur Extraktion von Serviceprotokollen.\n\nAnalysiere das folgende deutsche Transkript eines technischen\nVor-Ort-Einsatzes und extrahiere ausschließlich die geforderten Felder.\n\nRegeln:\n- Erfinde keine Informationen.\n- Wenn eine Angabe nicht vorhanden ist, verwende null.\n- Formuliere durchgeführte Arbeiten und Ergebnis sachlich und knapp.\n- Datum im Format YYYY-MM-DD ausgeben.\n- Einsatzdauer möglichst in Minuten ausgeben.\n- Der Status muss einer dieser Werte sein:\n  \"abgeschlossen\", \"teilweise_abgeschlossen\", \"offen\", \"unbekannt\".\n- Gib ausschließlich die vorgegebene strukturierte Ausgabe zurück.\n\nTranskript:\n{{ $json.text }}",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        208,
+        0
+      ],
+      "id": "1645da93-7c71-49ad-8bd8-74dea8a3621d",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"kunde\": \"Michael Mustermann\",\n  \"einsatzdatum\": \"2026-07-29\",\n  \"techniker\": null,\n  \"einsatzort\": null,\n  \"problem\": \"Heizung defekt\",\n  \"ziel\": \"Funktionsfähigkeit der Heizung wiederherstellen\",\n  \"durchgefuehrte_arbeiten\": \"Heizung repariert\",\n  \"verwendete_materialien\": null,\n  \"ergebnis\": \"Reparatur durchgeführt, Rückmeldung des Kunden steht aus\",\n  \"status\": \"offen\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        416,
+        208
+      ],
+      "id": "42530717-8008-4d56-a443-15c3e8fd7cdd",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "docker.io/ai/qwen2.5:latest",
+          "mode": "list",
+          "cachedResultName": "docker.io/ai/qwen2.5:latest"
+        },
+        "options": {
+          "maxTokens": 1500
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        96,
+        208
+      ],
+      "id": "2692cb90-ab92-4b20-8842-42a57e912b13",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "5tMeXPfqRCIxwWGf",
+          "name": "OpenAi account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "86f254ec-bf4d-4b8c-a64d-3cc8b7ad2435",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "dda8fc82325b5b5f9aaf778116c853b6f258e85edca6e19be5ee60c65929fe28"
+  },
+  "id": "n72h4HvzCCDZqLhM",
+  "tags": []
+}
