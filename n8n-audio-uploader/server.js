@@ -129,6 +129,15 @@ app.get("/api/pdf-download", (_req, res) => {
   return res.send(latestPdf.buffer);
 });
 
+app.post("/api/pdf-reset", (_req, res) => {
+  latestPdf = null;
+
+  return res.json({
+    success: true,
+  });
+});
+
+
 // Nur einmal starten
 app.listen(PORT, () => {
   console.log(`Frontend läuft auf http://localhost:${PORT}`);

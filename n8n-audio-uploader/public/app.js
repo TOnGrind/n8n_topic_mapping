@@ -15,6 +15,8 @@ const progressText = document.getElementById("progressText");
 const message = document.getElementById("message");
 const responseBox = document.getElementById("responseBox");
 const responseText = document.getElementById("responseText");
+const pdfDownload = document.getElementById("pdfDownload");
+
 
 let selectedFile = null;
 let objectUrl = null;
@@ -132,7 +134,25 @@ dropzone.addEventListener("drop", (event) => {
 
 removeButton.addEventListener("click", resetFile);
 
-uploadButton.addEventListener("click", () => {
+uploadButton.addEventListener("click", async () => {
+  // Laufende Statusprüfung stoppen
+  if (pdfStatusTimer) {
+    clearTimeout(pdfStatusTimer);
+    pdfStatusTimer = null;
+  }
+
+  // Download-Bereich verstecken
+  pdfDownload.style.display = "none";
+
+  // Alte PDF im Express-Server löschen
+  try {
+    await fetch("/api/pdf-reset", {
+      method: "POST",
+    });
+  } catch (error) {
+    console.error("PDF-Reset fehlgeschlagen:", error);
+  }
+
   clearMessage();
 
   if (!selectedFile) {
@@ -172,23 +192,33 @@ xhr.open("POST", "/api/upload");
   });
 
   xhr.addEventListener("load", () => {
-    currentRequest = null;
-    uploadButton.disabled = false;
-    uploadButton.textContent = "An n8n senden";
-    progressBar.style.width = "100%";
-    progressText.textContent = "100%";
+  currentRequest = null;
+  uploadButton.disabled = false;
+  uploadButton.textContent = "An n8n senden";
+  progressBar.style.width = "100%";
+  progressText.textContent = "100%";
 
-    if (xhr.status >= 200 && xhr.status < 300) {
-      showMessage("Die MP3-Datei wurde erfolgreich an n8n gesendet.", "success");
-    } else {
-      showMessage(`Der Webhook antwortete mit HTTP ${xhr.status}.`, "error");
-    }
+  if (xhr.status >= 200 && xhr.status < 300) {
+    showMessage(
+      "Die MP3 wurde gesendet. Das PDF wird erstellt …",
+      "info"
+    );
 
-    if (xhr.responseText) {
-      responseText.textContent = xhr.responseText;
-      responseBox.classList.remove("hidden");
-    }
-  });
+    console.log("Upload erfolgreich – starte PDF-Prüfung");
+
+    checkPdfStatus();
+  } else {
+    showMessage(
+      `Der Webhook antwortete mit HTTP ${xhr.status}.`,
+      "error"
+    );
+  }
+
+  if (xhr.responseText) {
+    responseText.textContent = xhr.responseText;
+    responseBox.classList.remove("hidden");
+  }
+});
 
   xhr.addEventListener("error", () => {
     currentRequest = null;
@@ -211,22 +241,40 @@ xhr.open("POST", "/api/upload");
 });
 
 
-const pdfDownload = document.getElementById("pdfDownload");
+let pdfStatusTimer = null;
 
 async function checkPdfStatus() {
+  console.log("Prüfe PDF-Status ...");
+
   try {
-    const response = await fetch("/api/pdf-status");
+    const response = await fetch(`/api/pdf-status?t=${Date.now()}`, {
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
     const result = await response.json();
 
-    if (result.ready) {
-      pdfDownload.classList.remove("hidden");
+    console.log("PDF-Status:", result);
+
+    if (result.ready === true) {
+      console.log("PDF ist fertig");
+
+      pdfDownload.style.display = "flex";
+
+      showMessage(
+        "Das Serviceprotokoll ist fertig und kann heruntergeladen werden.",
+        "success"
+      );
+
+      pdfStatusTimer = null;
       return;
     }
   } catch (error) {
     console.error("Statusprüfung fehlgeschlagen:", error);
   }
 
-  setTimeout(checkPdfStatus, 2000);
+  pdfStatusTimer = setTimeout(checkPdfStatus, 2000);
 }
-
-checkPdfStatus();
