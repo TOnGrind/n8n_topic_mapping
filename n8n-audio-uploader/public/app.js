@@ -209,3 +209,24 @@ xhr.open("POST", "/api/upload");
 
   xhr.send(formData);
 });
+
+
+const pdfDownload = document.getElementById("pdfDownload");
+
+async function checkPdfStatus() {
+  try {
+    const response = await fetch("/api/pdf-status");
+    const result = await response.json();
+
+    if (result.ready) {
+      pdfDownload.classList.remove("hidden");
+      return;
+    }
+  } catch (error) {
+    console.error("Statusprüfung fehlgeschlagen:", error);
+  }
+
+  setTimeout(checkPdfStatus, 2000);
+}
+
+checkPdfStatus();

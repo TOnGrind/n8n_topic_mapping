@@ -1,7 +1,7 @@
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Annotated
-
+import requests
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from faster_whisper import WhisperModel
 
@@ -268,12 +268,19 @@ async def generate_pdf(report: ServiceReport):
 
     filename = "serviceprotokoll.pdf"
 
-    return StreamingResponse(
-        buffer,
-        media_type="application/pdf",
+    buffer.seek(0)
+    pdf_bytes = buffer.getvalue()
+
+    response = requests.post(
+        "http://localhost:3000/api/pdf-ready",
+        data=pdf_bytes,
         headers={
-            "Content-Disposition": f'attachment; filename="{filename}"'
+            "Content-Type": "application/pdf",
+            "Content-Disposition": f'attachment; filename="{filename}"',
         },
+        timeout=30,
     )
+
+    response.raise_for_status()
 
 #to start:uvicorn server:app --host 0.0.0.0 --port 8000

@@ -102,6 +102,24 @@
           "name": "OpenAi account"
         }
       }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/generate-pdf",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n{\n  \"kunde\": $json.kunde,\n  \"einsatzdatum\": $json.einsatzdatum,\n  \"techniker\": $json.techniker,\n  \"einsatzort\": $json.einsatzort,\n  \"problem\": $json.problem,\n  \"ziel\": $json.ziel,\n  \"durchgefuehrte_arbeiten\": $json.durchgefuehrte_arbeiten,\n  \"verwendete_materialien\": $json.verwendete_materialien,\n  \"ergebnis\": $json.ergebnis,\n  \"status\": $json.status\n}\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        560,
+        0
+      ],
+      "id": "de3f5317-2dd4-4264-9f22-4339a626a629",
+      "name": "HTTP Request1"
     }
   ],
   "pinData": {},
@@ -150,13 +168,24 @@
           }
         ]
       ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "86f254ec-bf4d-4b8c-a64d-3cc8b7ad2435",
+  "versionId": "3ebafe5d-3336-4923-a638-99db3072868b",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "dda8fc82325b5b5f9aaf778116c853b6f258e85edca6e19be5ee60c65929fe28"

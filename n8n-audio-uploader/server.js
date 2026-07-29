@@ -16,8 +16,20 @@ const PORT = process.env.PORT || 3000;
 const N8N_WEBHOOK_URL =
   "http://localhost:5678/webhook/0e8824b2-8b66-4c84-b143-8ed3863eb4cf";
 
+let latestPdf = null;
+
+// Statische Frontend-Dateien
 app.use(express.static(path.join(__dirname, "public")));
 
+// Rohe PDF-Daten empfangen
+app.use(
+  express.raw({
+    type: "application/pdf",
+    limit: "20mb",
+  })
+);
+
+// MP3 an n8n weiterleiten
 app.post("/api/upload", upload.single("audio"), async (req, res) => {
   try {
     if (!req.file) {
@@ -27,7 +39,7 @@ app.post("/api/upload", upload.single("audio"), async (req, res) => {
       });
     }
 
-    console.log("Exakte Webhook-URL:", JSON.stringify(N8N_WEBHOOK_URL));
+    console.log("Webhook-URL:", N8N_WEBHOOK_URL);
     console.log("Datei:", {
       name: req.file.originalname,
       type: req.file.mimetype,
@@ -55,7 +67,6 @@ app.post("/api/upload", upload.single("audio"), async (req, res) => {
     return res.status(n8nResponse.status).json({
       success: n8nResponse.ok,
       status: n8nResponse.status,
-      webhookUrl: N8N_WEBHOOK_URL,
       n8nResponse: responseText,
     });
   } catch (error) {
@@ -68,6 +79,57 @@ app.post("/api/upload", upload.single("audio"), async (req, res) => {
   }
 });
 
+// PDF vom FastAPI-Server empfangen
+app.post("/api/pdf-ready", (req, res) => {
+  if (!Buffer.isBuffer(req.body) || req.body.length === 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Keine PDF erhalten.",
+    });
+  }
+
+  latestPdf = {
+    buffer: req.body,
+    filename: "serviceprotokoll.pdf",
+    createdAt: Date.now(),
+  };
+
+  console.log("PDF empfangen:", latestPdf.buffer.length, "Bytes");
+
+  return res.json({
+    success: true,
+    filename: latestPdf.filename,
+  });
+});
+
+// Status für das Frontend
+app.get("/api/pdf-status", (_req, res) => {
+  return res.json({
+    ready: Boolean(latestPdf),
+    filename: latestPdf?.filename ?? null,
+  });
+});
+
+// PDF-Download
+app.get("/api/pdf-download", (_req, res) => {
+  if (!latestPdf) {
+    return res.status(404).json({
+      success: false,
+      message: "Keine PDF verfügbar.",
+    });
+  }
+
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="${latestPdf.filename}"`
+  );
+  res.setHeader("Content-Length", latestPdf.buffer.length);
+
+  return res.send(latestPdf.buffer);
+});
+
+// Nur einmal starten
 app.listen(PORT, () => {
   console.log(`Frontend läuft auf http://localhost:${PORT}`);
 });

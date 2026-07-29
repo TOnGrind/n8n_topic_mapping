@@ -305,3 +305,119 @@ code {
     width: 100%;
   }
 }
+
+
+.download-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid #bbf7d0;
+  border-radius: 16px;
+  background: #f0fdf4;
+  box-shadow: 0 8px 25px rgba(22, 101, 52, 0.08);
+  animation: downloadCardAppear 0.35s ease-out;
+}
+
+.download-card.hidden {
+  display: none;
+}
+
+.download-icon {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  color: white;
+  background: #dc2626;
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow: 0 8px 20px rgba(220, 38, 38, 0.22);
+  animation: downloadIconPulse 1.2s ease-in-out 2;
+}
+
+.download-content {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 4px;
+}
+
+.download-content strong {
+  color: #166534;
+}
+
+.download-content span {
+  color: #4b5563;
+  font-size: 14px;
+}
+
+.download-button {
+  flex: 0 0 auto;
+  padding: 11px 15px;
+  border: 0;
+  border-radius: 10px;
+  color: white;
+  background: #16a34a;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.download-button:hover {
+  background: #15803d;
+}
+
+@keyframes downloadCardAppear {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes downloadIconPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+@media (max-width: 600px) {
+  .download-card {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .download-button {
+    width: 100%;
+  }
+}
+
+.hidden {
+  display: none;
+}
+
+#pdfDownload {
+  margin-top: 20px;
+  padding: 16px;
+  border: 1px solid #86efac;
+  border-radius: 12px;
+  background: #f0fdf4;
+}
+
+#pdfDownload a {
+  display: inline-block;
+  margin-left: 12px;
+  font-weight: bold;
+}
