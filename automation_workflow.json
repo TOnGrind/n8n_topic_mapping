@@ -109,7 +109,7 @@
         "url": "http://host.docker.internal:8000/generate-pdf",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{\n{\n  \"kunde\": $json.kunde,\n  \"einsatzdatum\": $json.einsatzdatum,\n  \"techniker\": $json.techniker,\n  \"einsatzort\": $json.einsatzort,\n  \"problem\": $json.problem,\n  \"ziel\": $json.ziel,\n  \"durchgefuehrte_arbeiten\": $json.durchgefuehrte_arbeiten,\n  \"verwendete_materialien\": $json.verwendete_materialien,\n  \"ergebnis\": $json.ergebnis,\n  \"status\": $json.status\n}\n}}",
+        "jsonBody": "={\n  \"kunde\": \"={{ $json.output.kunde }}\",\n  \"einsatzdatum\": \"={{ $json.output.einsatzdatum }}\",\n  \"techniker\": \"={{ $json.output.techniker }}\",\n  \"einsatzort\": \"={{ $json.output.einsatzort }}\",\n  \"problem\": \"={{ $json.output.problem }}\",\n  \"ziel\": \"={{ $json.output.ziel }}\",\n  \"durchgefuehrte_arbeiten\": \"={{ $json.output.durchgefuehrte_arbeiten }}\",\n  \"verwendete_materialien\": \"={{ $json.output.verwendete_materialien }}\",\n  \"ergebnis\": \"={{ $json.output.ergebnis }}\",\n  \"status\": \"={{ $json.output.status }}\"\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -185,7 +185,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "3ebafe5d-3336-4923-a638-99db3072868b",
+  "versionId": "145836be-219d-40d5-a8d7-fc68b009bf88",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "dda8fc82325b5b5f9aaf778116c853b6f258e85edca6e19be5ee60c65929fe28"

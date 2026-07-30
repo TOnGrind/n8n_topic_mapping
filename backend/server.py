@@ -187,8 +187,16 @@ class ServiceReport(BaseModel):
     status: Optional[str] = None
 
 
+from typing import Optional
+
+
 def safe_value(value: Optional[str]) -> str:
-    return value or "Nicht angegeben"
+    if value is None:
+        return "Nicht angegeben"
+
+    cleaned_value = str(value).strip().removeprefix("=").strip()
+
+    return cleaned_value or "Nicht angegeben"
 
 
 @app.post("/generate-pdf")
