@@ -1,6 +1,8 @@
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+from contextlib import asynccontextmanager
 from typing import Annotated
+from threading import Thread
 import requests
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from faster_whisper import WhisperModel
@@ -27,15 +29,48 @@ from reportlab.platypus import (
 
 
 
-app = FastAPI(title="Local Whisper API")
-
-# Für CPU geeignet:
 MODEL_NAME = "medium"
 
-model = WhisperModel(
-    MODEL_NAME,
-    device="cpu",
-    compute_type="int8",
+model: Optional[WhisperModel] = None
+model_ready = False
+model_error: Optional[str] = None
+
+
+def load_model() -> None:
+    global model, model_ready, model_error
+
+    try:
+        print(f"Lade Whisper-Modell '{MODEL_NAME}' ...", flush=True)
+
+        model = WhisperModel(
+            MODEL_NAME,
+            device="cpu",
+            compute_type="int8",
+        )
+
+        model_ready = True
+        print("Whisper-Modell ist bereit.", flush=True)
+
+    except Exception as error:
+        model_error = str(error)
+        print(f"Fehler beim Laden des Modells: {error}", flush=True)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    model_thread = Thread(
+        target=load_model,
+        daemon=True,
+        name="whisper-model-loader",
+    )
+    model_thread.start()
+
+    yield
+
+
+app = FastAPI(
+    title="Local Whisper API",
+    lifespan=lifespan,
 )
 
 
@@ -44,6 +79,8 @@ def health() -> dict:
     return {
         "status": "ok",
         "model": MODEL_NAME,
+        "ready": model_ready,
+        "error": model_error,
     }
 
 
@@ -291,4 +328,4 @@ async def generate_pdf(report: ServiceReport):
 
     response.raise_for_status()
 
-#to start:uvicorn server:app --host 0.0.0.0 --port 8000
+#to start: uvicorn server:app --host 0.0.0.0 --port 8000

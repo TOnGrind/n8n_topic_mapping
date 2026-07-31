@@ -1,0 +1,17 @@
+# syntax=docker/dockerfile:1
+
+FROM node:20.2.0-alpine
+
+WORKDIR /app
+
+# Dependency-Dateien zuerst kopieren
+COPY package.json package-lock.json ./
+
+# Reproduzierbare Installation anhand des Lockfiles
+RUN npm ci
+
+COPY . .
+
+EXPOSE 3000
+
+CMD ["npm", "start"]

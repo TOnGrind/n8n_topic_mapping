@@ -1,0 +1,20 @@
+FROM docker.n8n.io/n8nio/n8n:2.2.0
+USER root
+
+RUN mkdir -p /home/node/workflows \
+    && chown -R node:node /home/node/workflows
+
+COPY --chown=node:node automation_workflow.json \
+    /home/node/workflows/automation_workflow.json
+
+COPY --chown=node:node import-and-start.sh \
+    /home/node/import-and-start.sh
+
+# Windows-Zeilenenden entfernen
+RUN sed -i 's/\r$//' /home/node/import-and-start.sh \
+    && chmod +x /home/node/import-and-start.sh
+
+USER node
+
+# Wichtig: ENTRYPOINT überschreibt den n8n-Entrypoint.
+ENTRYPOINT ["/bin/sh", "/home/node/import-and-start.sh"]
