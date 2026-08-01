@@ -17,7 +17,7 @@ const responseBox = document.getElementById("responseBox");
 const responseText = document.getElementById("responseText");
 const pdfDownload = document.getElementById("pdfDownload");
 
-
+let upoadbuttoncolor = uploadButton.style.backgroundColor;
 let selectedFile = null;
 let objectUrl = null;
 let currentRequest = null;
@@ -143,6 +143,8 @@ uploadButton.addEventListener("click", async () => {
 
   // Alten Download-Bereich verstecken
   pdfDownload.style.display = "none";
+  uploadButton.disabled = true;
+  uploadButton.style.backgroundColor = "#808080";
 
   clearMessage();
 
@@ -198,7 +200,7 @@ uploadButton.addEventListener("click", async () => {
 
   xhr.addEventListener("load", () => {
     currentRequest = null;
-    uploadButton.disabled = false;
+    uploadButton.disabled = true;
     uploadButton.textContent = "An n8n senden";
 
     if (xhr.status >= 200 && xhr.status < 300) {
@@ -273,6 +275,9 @@ async function checkPdfStatus() {
       console.log("PDF ist fertig");
 
       pdfDownload.style.display = "flex";
+
+      uploadButton.disabled = false;
+      uploadButton.style.backgroundColor = upoadbuttoncolor;
 
       showMessage(
         "Das Serviceprotokoll ist fertig und kann heruntergeladen werden.",
