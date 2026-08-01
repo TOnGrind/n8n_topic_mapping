@@ -6,7 +6,7 @@ from threading import Thread
 import requests
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from faster_whisper import WhisperModel
-
+import os
 from io import BytesIO
 from typing import Optional
 
@@ -23,7 +23,10 @@ from reportlab.platypus import (
     Table,
     TableStyle,
 )
-
+FRONTEND_PDF_URL = os.getenv(
+    "FRONTEND_PDF_URL",
+    "http://localhost:3000/api/pdf-ready",
+)
 
 
 
@@ -317,13 +320,13 @@ async def generate_pdf(report: ServiceReport):
     pdf_bytes = buffer.getvalue()
 
     response = requests.post(
-        "http://localhost:3000/api/pdf-ready",
-        data=pdf_bytes,
-        headers={
-            "Content-Type": "application/pdf",
-            "Content-Disposition": f'attachment; filename="{filename}"',
-        },
-        timeout=30,
+    FRONTEND_PDF_URL,
+    data=pdf_bytes,
+    headers={
+        "Content-Type": "application/pdf",
+        "Content-Disposition": f'attachment; filename="{filename}"',
+    },
+    timeout=30,
     )
 
     response.raise_for_status()

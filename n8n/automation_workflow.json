@@ -24,7 +24,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://host.docker.internal:8000/transcribe",
+        "url": "http://backend:8000/transcribe",
         "sendBody": true,
         "contentType": "multipart-form-data",
         "bodyParameters": {
@@ -45,12 +45,12 @@
         0
       ],
       "id": "c70c34c8-a1bf-4787-a265-a601a76262af",
-      "name": "HTTP Request"
+      "name": "Audio transkribieren"
     },
     {
       "parameters": {
         "promptType": "define",
-        "text": "=Du bist ein System zur Extraktion von Serviceprotokollen.\n\nAnalysiere das folgende deutsche Transkript eines technischen\nVor-Ort-Einsatzes und extrahiere ausschließlich die geforderten Felder.\n\nRegeln:\n- Erfinde keine Informationen.\n- Wenn eine Angabe nicht vorhanden ist, verwende null.\n- Formuliere durchgeführte Arbeiten und Ergebnis sachlich und knapp.\n- Datum im Format YYYY-MM-DD ausgeben.\n- Einsatzdauer möglichst in Minuten ausgeben.\n- Der Status muss einer dieser Werte sein:\n  \"abgeschlossen\", \"teilweise_abgeschlossen\", \"offen\", \"unbekannt\".\n- Gib ausschließlich die vorgegebene strukturierte Ausgabe zurück.\n\nTranskript:\n{{ $json.text }}",
+        "text": "=Du bist ein System zur Extraktion von Serviceprotokollen.\n\nAnalysiere das folgende deutsche Transkript eines technischen\nVor-Ort-Einsatzes und extrahiere ausschließlich die geforderten Felder.\n\nRegeln:\n- Erfinde keine Informationen.\n- Wenn eine Angabe nicht vorhanden ist, verwende null.\n- Formuliere durchgeführte Arbeiten und Ergebnis sachlich und knapp.\n- Datum im Format YYYY-MM-DD ausgeben.\n- Der Status muss einer dieser Werte sein:\n  \"abgeschlossen\", \"teilweise_abgeschlossen\", \"offen\", \"unbekannt\".\n- Gib ausschließlich die vorgegebene strukturierte Ausgabe zurück.\n\nTranskript:\n{{ $json.text }}",
         "hasOutputParser": true,
         "batching": {}
       },
@@ -61,7 +61,7 @@
         0
       ],
       "id": "1645da93-7c71-49ad-8bd8-74dea8a3621d",
-      "name": "Basic LLM Chain"
+      "name": "Serviceprotokoll extrahieren"
     },
     {
       "parameters": {
@@ -74,15 +74,14 @@
         208
       ],
       "id": "42530717-8008-4d56-a443-15c3e8fd7cdd",
-      "name": "Structured Output Parser"
+      "name": "Serviceprotokoll Schema"
     },
     {
       "parameters": {
         "model": {
           "__rl": true,
-          "value": "docker.io/ai/qwen2.5:latest",
-          "mode": "list",
-          "cachedResultName": "docker.io/ai/qwen2.5:latest"
+          "value": "ai/qwen2.5:7B-Q4_K_M",
+          "mode": "id"
         },
         "options": {
           "maxTokens": 1500
@@ -95,21 +94,16 @@
         208
       ],
       "id": "2692cb90-ab92-4b20-8842-42a57e912b13",
-      "name": "OpenAI Chat Model",
-      "credentials": {
-        "openAiApi": {
-          "id": "5tMeXPfqRCIxwWGf",
-          "name": "OpenAi account"
-        }
-      }
+      "name": "Qwen 2.5 Model Runner"
+      
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "http://host.docker.internal:8000/generate-pdf",
+        "url": "http://backend:8000/generate-pdf",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"kunde\": \"={{ $json.output.kunde }}\",\n  \"einsatzdatum\": \"={{ $json.output.einsatzdatum }}\",\n  \"techniker\": \"={{ $json.output.techniker }}\",\n  \"einsatzort\": \"={{ $json.output.einsatzort }}\",\n  \"problem\": \"={{ $json.output.problem }}\",\n  \"ziel\": \"={{ $json.output.ziel }}\",\n  \"durchgefuehrte_arbeiten\": \"={{ $json.output.durchgefuehrte_arbeiten }}\",\n  \"verwendete_materialien\": \"={{ $json.output.verwendete_materialien }}\",\n  \"ergebnis\": \"={{ $json.output.ergebnis }}\",\n  \"status\": \"={{ $json.output.status }}\"\n}",
+        "jsonBody": "={{ {\n  kunde: $json.output.kunde,\n  einsatzdatum: $json.output.einsatzdatum,\n  techniker: $json.output.techniker,\n  einsatzort: $json.output.einsatzort,\n  problem: $json.output.problem,\n  ziel: $json.output.ziel,\n  durchgefuehrte_arbeiten: $json.output.durchgefuehrte_arbeiten,\n  verwendete_materialien: $json.output.verwendete_materialien,\n  ergebnis: $json.output.ergebnis,\n  status: $json.output.status\n} }}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -119,7 +113,7 @@
         0
       ],
       "id": "de3f5317-2dd4-4264-9f22-4339a626a629",
-      "name": "HTTP Request1"
+      "name": "PDF erzeugen"
     }
   ],
   "pinData": {},
@@ -128,7 +122,7 @@
       "main": [
         [
           {
-            "node": "HTTP Request",
+            "node": "Audio transkribieren",
             "type": "main",
             "index": 0
           }
@@ -136,44 +130,44 @@
         []
       ]
     },
-    "HTTP Request": {
+    "Audio transkribieren": {
       "main": [
         [
           {
-            "node": "Basic LLM Chain",
+            "node": "Serviceprotokoll extrahieren",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Structured Output Parser": {
+    "Serviceprotokoll Schema": {
       "ai_outputParser": [
         [
           {
-            "node": "Basic LLM Chain",
+            "node": "Serviceprotokoll extrahieren",
             "type": "ai_outputParser",
             "index": 0
           }
         ]
       ]
     },
-    "OpenAI Chat Model": {
+    "Qwen 2.5 Model Runner": {
       "ai_languageModel": [
         [
           {
-            "node": "Basic LLM Chain",
+            "node": "Serviceprotokoll extrahieren",
             "type": "ai_languageModel",
             "index": 0
           }
         ]
       ]
     },
-    "Basic LLM Chain": {
+    "Serviceprotokoll extrahieren": {
       "main": [
         [
           {
-            "node": "HTTP Request1",
+            "node": "PDF erzeugen",
             "type": "main",
             "index": 0
           }
@@ -181,15 +175,13 @@
       ]
     }
   },
-  "active": true,
+  "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "145836be-219d-40d5-a8d7-fc68b009bf88",
+  "versionId": "50be39e4-790d-4b77-b8d6-1a95cb88dffb",
   "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "dda8fc82325b5b5f9aaf778116c853b6f258e85edca6e19be5ee60c65929fe28"
+    "templateCredsSetupCompleted": false
   },
-  "id": "n72h4HvzCCDZqLhM",
   "tags": []
 }

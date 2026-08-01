@@ -2,7 +2,7 @@ const MAX_FILE_SIZE = 100 * 1024 * 1024;
 
 const dropzone = document.getElementById("dropzone");
 const fileInput = document.getElementById("fileInput");
-const webhookUrl = document.getElementById("webhookUrl");
+
 const uploadButton = document.getElementById("uploadButton");
 const removeButton = document.getElementById("removeButton");
 const fileCard = document.getElementById("fileCard");
@@ -135,23 +135,14 @@ dropzone.addEventListener("drop", (event) => {
 removeButton.addEventListener("click", resetFile);
 
 uploadButton.addEventListener("click", async () => {
-  // Laufende Statusprüfung stoppen
+  // Laufende PDF-Statusprüfung stoppen
   if (pdfStatusTimer) {
     clearTimeout(pdfStatusTimer);
     pdfStatusTimer = null;
   }
 
-  // Download-Bereich verstecken
+  // Alten Download-Bereich verstecken
   pdfDownload.style.display = "none";
-
-  // Alte PDF im Express-Server löschen
-  try {
-    await fetch("/api/pdf-reset", {
-      method: "POST",
-    });
-  } catch (error) {
-    console.error("PDF-Reset fehlgeschlagen:", error);
-  }
 
   clearMessage();
 
@@ -160,72 +151,90 @@ uploadButton.addEventListener("click", async () => {
     return;
   }
 
-  let url;
+  // Alte PDF im Express-Server löschen
   try {
-    url = new URL(webhookUrl.value.trim());
-  } catch {
-    showMessage("Die Webhook-URL ist ungültig.", "error");
-    return;
+    const resetResponse = await fetch("/api/pdf-reset", {
+      method: "POST",
+    });
+
+    if (!resetResponse.ok) {
+      console.warn(
+        `PDF-Reset antwortete mit HTTP ${resetResponse.status}.`
+      );
+    }
+  } catch (error) {
+    console.error("PDF-Reset fehlgeschlagen:", error);
   }
 
- const formData = new FormData();
+  const formData = new FormData();
+  formData.append("audio", selectedFile, selectedFile.name);
 
-formData.append("audio", selectedFile, selectedFile.name);
-formData.append("webhookUrl", url.toString());
+  const xhr = new XMLHttpRequest();
+  currentRequest = xhr;
 
-const xhr = new XMLHttpRequest();
-currentRequest = xhr;
-
-xhr.open("POST", "/api/upload");
-
+  // Browser kommuniziert nur mit dem Express-Frontend.
+  xhr.open("POST", "/api/upload");
 
   uploadButton.disabled = true;
   uploadButton.textContent = "Wird gesendet …";
   progressWrap.classList.remove("hidden");
+  progressBar.style.width = "0%";
+  progressText.textContent = "0%";
+
   showMessage("Upload läuft …", "info");
 
   xhr.upload.addEventListener("progress", (event) => {
-    if (!event.lengthComputable) return;
-    const percent = Math.round((event.loaded / event.total) * 100);
+    if (!event.lengthComputable) {
+      return;
+    }
+
+    const percent = Math.round(
+      (event.loaded / event.total) * 100
+    );
+
     progressBar.style.width = `${percent}%`;
     progressText.textContent = `${percent}%`;
   });
 
   xhr.addEventListener("load", () => {
-  currentRequest = null;
-  uploadButton.disabled = false;
-  uploadButton.textContent = "An n8n senden";
-  progressBar.style.width = "100%";
-  progressText.textContent = "100%";
+    currentRequest = null;
+    uploadButton.disabled = false;
+    uploadButton.textContent = "An n8n senden";
 
-  if (xhr.status >= 200 && xhr.status < 300) {
-    showMessage(
-      "Die MP3 wurde gesendet. Das PDF wird erstellt …",
-      "info"
-    );
+    if (xhr.status >= 200 && xhr.status < 300) {
+      progressBar.style.width = "100%";
+      progressText.textContent = "100%";
 
-    console.log("Upload erfolgreich – starte PDF-Prüfung");
+      showMessage(
+        "Die MP3 wurde gesendet. Das PDF wird erstellt …",
+        "info"
+      );
 
-    checkPdfStatus();
-  } else {
-    showMessage(
-      `Der Webhook antwortete mit HTTP ${xhr.status}.`,
-      "error"
-    );
-  }
+      console.log(
+        "Upload erfolgreich – starte PDF-Statusprüfung."
+      );
 
-  if (xhr.responseText) {
-    responseText.textContent = xhr.responseText;
-    responseBox.classList.remove("hidden");
-  }
-});
+      checkPdfStatus();
+    } else {
+      showMessage(
+        `Der Upload-Server antwortete mit HTTP ${xhr.status}.`,
+        "error"
+      );
+    }
+
+    if (xhr.responseText) {
+      responseText.textContent = xhr.responseText;
+      responseBox.classList.remove("hidden");
+    }
+  });
 
   xhr.addEventListener("error", () => {
     currentRequest = null;
     uploadButton.disabled = false;
     uploadButton.textContent = "An n8n senden";
+
     showMessage(
-      "Netzwerkfehler. Prüfe, ob n8n läuft und ob CORS erlaubt ist.",
+      "Netzwerkfehler. Prüfe, ob der Frontend-Server erreichbar ist.",
       "error"
     );
   });
@@ -234,6 +243,7 @@ xhr.open("POST", "/api/upload");
     currentRequest = null;
     uploadButton.disabled = false;
     uploadButton.textContent = "An n8n senden";
+
     showMessage("Upload wurde abgebrochen.", "info");
   });
 

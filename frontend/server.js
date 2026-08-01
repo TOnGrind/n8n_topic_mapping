@@ -13,8 +13,18 @@ const upload = multer({
 
 const PORT = process.env.PORT || 3000;
 
-const N8N_WEBHOOK_URL =
-  "http://localhost:5678/webhook/0e8824b2-8b66-4c84-b143-8ed3863eb4cf";
+
+
+
+
+const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL;
+
+if (!N8N_WEBHOOK_URL) {
+  throw new Error("N8N_WEBHOOK_URL wurde nicht gesetzt.");
+}
+
+//const N8N_WEBHOOK_URL =
+ // "http://localhost:5678/webhook/0e8824b2-8b66-4c84-b143-8ed3863eb4cf";
 
 let latestPdf = null;
 
